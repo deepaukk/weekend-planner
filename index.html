@@ -1,42 +1,362 @@
-# Weekend Planner
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Weekend Planner</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --accent: #D85A30; --accent-dark: #993C1D; --accent-light: #fff3ef;
+  --bg: #f5f3ef; --card: #ffffff; --border: #e8e4de;
+  --text: #1a1a1a; --muted: #888; --subtle: #f0ede8;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-A lightweight web app for finding activities based on available time, energy level, and weather.
+.nav { background: var(--card); border-bottom: 1px solid var(--border); display: flex; position: sticky; top: 0; z-index: 100; }
+.nav-btn { flex: 1; padding: 14px 0 12px; border: none; background: transparent; font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+.nav-btn .ni { font-size: 20px; }
+.nav-btn.active { color: var(--accent); border-bottom: 2.5px solid var(--accent); }
 
-## What it does
+.screen { display: none; padding: 16px 16px 100px; }
+.screen.active { display: block; }
 
-The app lets users:
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.card-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
 
-- Set how much time they have available
-- Select their current energy level
-- Select the current weather
-- Get activities ranked by how well they match
-- Add their own activities
-- Store activities locally in the browser
-- Remove activities from their list
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { padding: 8px 16px; border-radius: 100px; border: 1.5px solid var(--border); font-size: 13px; font-weight: 500; cursor: pointer; background: var(--card); color: #444; transition: all 0.12s; user-select: none; }
+.pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-## How matching works
+.time-big { font-size: 34px; font-weight: 700; margin-bottom: 10px; line-height: 1; }
+.time-big span { font-size: 16px; font-weight: 400; color: var(--muted); margin-left: 4px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
 
-The recommendation system uses a simple rule-based scoring model.
+.btn { display: block; width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+.btn:active { background: var(--accent-dark); }
 
-Activities are scored based on:
+.match-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; }
+.match-card.top { border-color: var(--accent); }
+.match-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.match-emoji { width: 46px; height: 46px; background: var(--subtle); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.match-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.stars { display: flex; gap: 3px; }
+.star { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
+.star.on { background: var(--accent); }
+.tag-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.tag { font-size: 11px; padding: 3px 9px; border-radius: 100px; font-weight: 600; background: var(--subtle); color: var(--muted); }
+.tag.ok { background: #EAF3DE; color: #3B6D11; }
+.tag.warn { background: #FAEEDA; color: #854F0B; }
 
-- Time compatibility
-- Energy-level compatibility
-- Weather compatibility
+.section-head { font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+.section-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
 
-Activities that require more time than the user has available are excluded.
+.form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; margin-top: 18px; display: block; }
+.form-label:first-child { margin-top: 0; }
+.text-input { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 15px; background: var(--bg); outline: none; color: var(--text); }
+.text-input:focus { border-color: var(--accent); background: #fff; }
 
-The remaining activities are sorted by their calculated score, with the strongest matches shown first.
+.emoji-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 7px; }
+.emoji-opt { aspect-ratio: 1; border: 1.5px solid var(--border); border-radius: 10px; background: var(--card); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.emoji-opt.on { border-color: var(--accent); background: var(--accent-light); }
 
-## Technologies
+.act-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 11px; }
+.act-emoji { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+.act-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.act-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.act-tag { font-size: 10px; padding: 2px 7px; border-radius: 100px; background: var(--subtle); color: var(--muted); font-weight: 600; }
+.del-btn { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: auto; }
+.del-btn:active { border-color: #fcc; color: #c33; background: #fff5f5; }
 
-- HTML
-- CSS
-- JavaScript
-- Browser localStorage
+.empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.empty .ei { font-size: 42px; margin-bottom: 14px; }
+.empty p { font-size: 14px; line-height: 1.65; }
+.no-results { text-align: center; padding: 32px 16px; }
+.no-results .ne { font-size: 36px; margin-bottom: 10px; }
+.no-results p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+.results-label { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.save-msg { text-align: center; font-size: 13px; min-height: 20px; margin-top: 10px; }
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+.count { display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 100px; margin-left: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
 
-## Purpose
+<nav class="nav">
+  <button class="nav-btn active" id="nav-find" onclick="go('find')"><span class="ni">🔍</span>Find</button>
+  <button class="nav-btn" id="nav-list" onclick="go('list')"><span class="ni">📋</span>My list</button>
+  <button class="nav-btn" id="nav-add"  onclick="go('add')"><span class="ni">➕</span>Add</button>
+</nav>
 
-This was a personal project built to practice front-end development, JavaScript logic, and building a small interactive web application.
+<!-- ─── FIND ─── -->
+<div class="screen active" id="screen-find">
+  <div class="section-head">What are you up for? 🙌</div>
+  <div class="section-sub">Set your mood and we'll match your list.</div>
 
-It is separate from my professional AI and data project work.
+  <div class="card">
+    <div class="card-title">Available time</div>
+    <div class="time-big" id="time-disp">1<span>hour</span></div>
+    <input type="range" id="time-slider" min="0" max="5" value="1" step="1" oninput="updateTime()">
+  </div>
+
+  <div class="card">
+    <div class="card-title">Energy level</div>
+    <div class="pill-group" id="g-energy">
+      <button class="pill on" data-v="low">Low ⚡</button>
+      <button class="pill" data-v="medium">Medium 🙂</button>
+      <button class="pill" data-v="high">High 💪</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Weather outside</div>
+    <div class="pill-group" id="g-weather">
+      <button class="pill on" data-v="sunny">☀️ Sunny</button>
+      <button class="pill" data-v="cloudy">☁️ Cloudy</button>
+      <button class="pill" data-v="rainy">🌧️ Rainy</button>
+      <button class="pill" data-v="cold">❄️ Cold</button>
+    </div>
+  </div>
+
+  <button class="btn" onclick="findActivities()" style="margin-bottom:18px">Find activities</button>
+  <div id="results"></div>
+</div>
+
+<!-- ─── MY LIST ─── -->
+<div class="screen" id="screen-list">
+  <div class="section-head">My activities <span class="count" id="list-count">0</span></div>
+  <div class="section-sub">Tap ✕ to remove.</div>
+  <div id="act-list"></div>
+</div>
+
+<!-- ─── ADD ─── -->
+<div class="screen" id="screen-add">
+  <div class="section-head">Add activity ✨</div>
+  <div class="section-sub">Tag it well for better matches.</div>
+  <div class="card">
+
+    <span class="form-label">Name</span>
+    <input class="text-input" id="inp-name" type="text" placeholder="e.g. Beach volleyball" maxlength="50">
+
+    <span class="form-label">Emoji</span>
+    <div class="emoji-grid" id="emoji-grid">
+      <button class="emoji-opt on" data-e="🏃">🏃</button>
+      <button class="emoji-opt" data-e="🚣">🚣</button>
+      <button class="emoji-opt" data-e="🥾">🥾</button>
+      <button class="emoji-opt" data-e="🧗">🧗</button>
+      <button class="emoji-opt" data-e="🎾">🎾</button>
+      <button class="emoji-opt" data-e="🚴">🚴</button>
+      <button class="emoji-opt" data-e="🏊">🏊</button>
+      <button class="emoji-opt" data-e="🧘">🧘</button>
+      <button class="emoji-opt" data-e="🌳">🌳</button>
+      <button class="emoji-opt" data-e="🏖️">🏖️</button>
+      <button class="emoji-opt" data-e="🐴">🐴</button>
+      <button class="emoji-opt" data-e="🚆">🚆</button>
+      <button class="emoji-opt" data-e="🛍️">🛍️</button>
+      <button class="emoji-opt" data-e="🍽️">🍽️</button>
+      <button class="emoji-opt" data-e="☕">☕</button>
+      <button class="emoji-opt" data-e="🎬">🎬</button>
+      <button class="emoji-opt" data-e="🎨">🎨</button>
+      <button class="emoji-opt" data-e="🎳">🎳</button>
+      <button class="emoji-opt" data-e="🧩">🧩</button>
+      <button class="emoji-opt" data-e="🏛️">🏛️</button>
+      <button class="emoji-opt" data-e="🧺">🧺</button>
+    </div>
+
+    <span class="form-label">Time needed</span>
+    <div class="pill-group" id="g-add-time">
+      <button class="pill" data-v="0">30 min</button>
+      <button class="pill on" data-v="1">1 hour</button>
+      <button class="pill" data-v="2">2 hours</button>
+      <button class="pill" data-v="3">3 hours</button>
+      <button class="pill" data-v="4">Half day</button>
+      <button class="pill" data-v="5">Full day</button>
+    </div>
+
+    <span class="form-label">Energy needed</span>
+    <div class="pill-group" id="g-add-energy">
+      <button class="pill" data-v="low">Low ⚡</button>
+      <button class="pill on" data-v="medium">Medium 🙂</button>
+      <button class="pill" data-v="high">High 💪</button>
+    </div>
+
+    <span class="form-label">Best weather</span>
+    <div class="pill-group" id="g-add-weather">
+      <button class="pill on" data-v="any">Any ✓</button>
+      <button class="pill" data-v="sunny">☀️ Sunny</button>
+      <button class="pill" data-v="cloudy">☁️ Cloudy</button>
+      <button class="pill" data-v="rainy">🌧️ Rainy</button>
+      <button class="pill" data-v="cold">❄️ Cold</button>
+    </div>
+
+    <span class="form-label">Location</span>
+    <div class="pill-group" id="g-add-location">
+      <button class="pill" data-v="indoors">🏠 Indoors</button>
+      <button class="pill on" data-v="either">Either</button>
+      <button class="pill" data-v="outdoors">🌿 Outdoors</button>
+    </div>
+
+    <span class="form-label">Cost</span>
+    <div class="pill-group" id="g-add-cost">
+      <button class="pill on" data-v="free">Free</button>
+      <button class="pill" data-v="cheap">Cheap 💸</button>
+      <button class="pill" data-v="moderate">Moderate 💰</button>
+      <button class="pill" data-v="splurge">Splurge 💎</button>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn" onclick="saveActivity()">Save activity</button>
+    <div class="save-msg" id="save-msg"></div>
+  </div>
+</div>
+
+<script>
+const TL = ['30 min','1 hour','2 hours','3 hours','Half day','Full day'];
+const EO = {low:0, medium:1, high:2};
+
+let data = JSON.parse(localStorage.getItem('wknd3') || 'null') || [
+  {id:1,name:'Kayaking / Paddleboarding',emoji:'🚣',time:3,energy:'high',weather:'sunny',location:'outdoors',cost:'moderate'},
+  {id:2,name:'Hiking',emoji:'🥾',time:3,energy:'high',weather:'sunny',location:'outdoors',cost:'free'},
+  {id:3,name:'Park walking',emoji:'🌳',time:1,energy:'low',weather:'any',location:'outdoors',cost:'free'},
+  {id:4,name:'Indoor bouldering',emoji:'🧗',time:2,energy:'high',weather:'any',location:'indoors',cost:'cheap'},
+  {id:5,name:'Tennis',emoji:'🎾',time:2,energy:'medium',weather:'sunny',location:'outdoors',cost:'cheap'},
+  {id:6,name:'Mall / supermarket',emoji:'🛍️',time:2,energy:'low',weather:'any',location:'indoors',cost:'moderate'},
+  {id:7,name:'Horse riding',emoji:'🐴',time:3,energy:'medium',weather:'sunny',location:'outdoors',cost:'splurge'},
+  {id:8,name:'Visiting another city',emoji:'🚆',time:5,energy:'medium',weather:'any',location:'either',cost:'moderate'},
+];
+let nid = data.length ? Math.max(...data.map(a=>a.id))+1 : 1;
+function persist(){ localStorage.setItem('wknd3', JSON.stringify(data)); }
+
+// nav
+function go(t){
+  ['find','list','add'].forEach(s=>{
+    document.getElementById('screen-'+s).classList.toggle('active',s===t);
+    document.getElementById('nav-'+s).classList.toggle('active',s===t);
+  });
+  if(t==='list') renderList();
+  if(t==='find') document.getElementById('results').innerHTML='';
+}
+
+// time
+function updateTime(){
+  const v=+document.getElementById('time-slider').value;
+  const p=TL[v].split(' ');
+  document.getElementById('time-disp').innerHTML=p[0]+'<span>'+p.slice(1).join(' ')+'</span>';
+}
+updateTime();
+
+// single-select pill groups
+function wire(id){
+  document.getElementById(id).querySelectorAll('.pill').forEach(b=>
+    b.addEventListener('click',()=>{
+      document.getElementById(id).querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+    })
+  );
+}
+['g-energy','g-weather','g-add-time','g-add-energy','g-add-weather','g-add-location','g-add-cost'].forEach(wire);
+
+function gv(id){ return document.querySelector('#'+id+' .pill.on')?.dataset.v||''; }
+
+// emoji
+document.getElementById('emoji-grid').querySelectorAll('.emoji-opt').forEach(b=>
+  b.addEventListener('click',()=>{
+    document.getElementById('emoji-grid').querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+  })
+);
+function ge(){ return document.querySelector('#emoji-grid .emoji-opt.on')?.dataset.e||'✨'; }
+
+// save
+function saveActivity(){
+  const name=document.getElementById('inp-name').value.trim();
+  const msg=document.getElementById('save-msg');
+  if(!name){ msg.style.color='#c33'; msg.textContent='⚠ Please enter a name'; setTimeout(()=>msg.textContent='',2000); return; }
+  data.push({id:nid++,name,emoji:ge(),time:+gv('g-add-time'),energy:gv('g-add-energy'),weather:gv('g-add-weather'),location:gv('g-add-location'),cost:gv('g-add-cost')});
+  persist(); updateCount();
+  document.getElementById('inp-name').value='';
+  msg.style.color='#3B6D11'; msg.textContent='✓ Saved! Add another or go find.';
+  setTimeout(()=>msg.textContent='',2500);
+}
+
+// list
+function renderList(){
+  updateCount();
+  const el=document.getElementById('act-list');
+  if(!data.length){ el.innerHTML='<div class="empty"><div class="ei">🗒️</div><p>No activities yet.<br>Tap <strong>Add</strong> to build your list.</p></div>'; return; }
+  el.innerHTML='';
+  data.forEach(a=>{
+    const d=document.createElement('div'); d.className='act-item';
+    d.innerHTML=`<div class="act-emoji">${a.emoji}</div><div style="flex:1"><div class="act-name">${a.name}</div><div class="act-tags"><span class="act-tag">⏱ ${TL[a.time]}</span><span class="act-tag">${a.energy} energy</span><span class="act-tag">${a.weather==='any'?'any weather':a.weather}</span><span class="act-tag">${a.location}</span><span class="act-tag">${a.cost}</span></div></div><button class="del-btn" onclick="del(${a.id})">✕</button>`;
+    el.appendChild(d);
+  });
+}
+function del(id){ data=data.filter(a=>a.id!==id); persist(); renderList(); }
+function updateCount(){ document.getElementById('list-count').textContent=data.length; }
+updateCount();
+
+// find
+function findActivities(){
+  const tv=+document.getElementById('time-slider').value;
+  const en=gv('g-energy');
+  const wt=gv('g-weather');
+  const el=document.getElementById('results');
+
+  if(!data.length){ el.innerHTML='<div class="no-results"><div class="ne">🗒️</div><p>Your list is empty.<br>Tap <strong>Add</strong> to get started.</p></div>'; return; }
+
+  const scored = data.map(a=>{
+    if(a.time > tv) return null; // doesn't fit time — skip
+
+    let score=0; const tags=[];
+
+    // time match
+    const tDiff = tv - a.time;
+    if(tDiff===0){ score+=3; tags.push({t:'Perfect time fit',c:'ok'}); }
+    else if(tDiff===1){ score+=2; tags.push({t:'Fits your time',c:'ok'}); }
+    else { score+=1; tags.push({t:'Fits your time',c:''}); }
+
+    // energy match
+    const eDiff = Math.abs(EO[a.energy]-EO[en]);
+    if(eDiff===0){ score+=3; tags.push({t:a.energy+' energy ✓',c:'ok'}); }
+    else if(eDiff===1){ score+=1; tags.push({t:a.energy+' energy',c:'warn'}); }
+    else { score+=0; tags.push({t:a.energy+' energy',c:''}); }
+
+    // weather match
+    if(a.weather==='any'||a.weather===wt){ score+=2; tags.push({t:a.weather==='any'?'any weather ✓':wt+' ✓',c:'ok'}); }
+    else { score-=1; tags.push({t:'better in '+a.weather,c:'warn'}); }
+
+    return {...a, score, tags};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score);
+
+  if(!scored.length){
+    el.innerHTML=`<div class="no-results"><div class="ne">😴</div><p>Nothing fits <strong>${TL[tv]}</strong> right now.<br>Try more time or add shorter activities.</p></div>`;
+    return;
+  }
+
+  const max=scored[0].score;
+  let html='<div class="results-label">✦ Best matches for you now</div>';
+  scored.forEach(a=>{
+    const pct=Math.min(5,Math.max(1,Math.round((a.score/(max||1))*5)));
+    const stars=[1,2,3,4,5].map(n=>`<div class="star${n<=pct?' on':''}"></div>`).join('');
+    html+=`<div class="match-card${a.score===max?' top':''}">
+      <div class="match-row">
+        <div class="match-emoji">${a.emoji}</div>
+        <div style="flex:1">
+          <div class="match-name">${a.name}</div>
+          <div class="stars">${stars}</div>
+        </div>
+        <div class="tag" style="flex-shrink:0">${a.cost}</div>
+      </div>
+      <div class="tag-row">
+        <span class="tag">⏱ ${TL[a.time]}</span>
+        <span class="tag">${a.location}</span>
+        ${a.tags.map(t=>`<span class="tag${t.c?' '+t.c:''}">${t.t}</span>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML=html;
+}
+</script>
+</body>
+</html>
